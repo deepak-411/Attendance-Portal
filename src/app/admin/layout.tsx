@@ -7,8 +7,9 @@ import { checkAdminAuth, logoutAdmin } from "@/lib/auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { LayoutDashboard, LogOut, School, Users } from "lucide-react";
+import { LayoutDashboard, LogOut } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import Image from "next/image";
 
 const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -49,7 +50,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="hidden w-64 flex-col border-r bg-background sm:flex">
         <div className="flex h-16 items-center border-b px-6">
           <Link href="/" className="flex items-center gap-2 font-semibold">
-            <School className="h-6 w-6 text-primary" />
+            <Image src="http://mychildmate.in/AdmissionForm/img/holywritlogo_512_512.png" alt="Holy Writ School Logo" width={32} height={32} />
             <span>HolyWrit Admin</span>
           </Link>
         </div>
