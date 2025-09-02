@@ -96,7 +96,9 @@ export default function RegisterPage() {
       fullName: "",
       email: "",
       role: defaultRole && staffRoles.some(r => r.value === defaultRole) ? defaultRole : undefined,
-      ...(defaultRole === 'teaching' && { teachingClasses: [] })
+      educationQualification: "",
+      post: "",
+      teachingClasses: [],
     },
   });
 
@@ -245,6 +247,7 @@ export default function RegisterPage() {
                                         Select all applicable classes.
                                     </FormDescription>
                                 </div>
+                                <div className="grid grid-cols-2 gap-2">
                                 {classOptions.map((item) => (
                                     <FormField
                                         key={item.id}
@@ -278,6 +281,7 @@ export default function RegisterPage() {
                                         }}
                                     />
                                 ))}
+                                </div>
                                 <FormMessage />
                             </FormItem>
                         )}
