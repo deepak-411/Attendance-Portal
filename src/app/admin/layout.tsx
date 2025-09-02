@@ -1,0 +1,98 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
+import { checkAdminAuth, logoutAdmin } from "@/lib/auth";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { LayoutDashboard, LogOut, School, Users } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const navItems = [
+  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+];
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+
+  useEffect(() => {
+    if (!checkAdminAuth()) {
+      router.replace("/admin/login");
+    } else {
+      setIsAuthorized(true);
+    }
+  }, [router]);
+
+  const handleLogout = () => {
+    logoutAdmin();
+    router.push("/admin/login");
+  };
+
+  if (!isAuthorized) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Skeleton className="h-full w-64" />
+        <div className="flex-1 p-8">
+          <Skeleton className="h-16 w-1/3 mb-8" />
+          <Skeleton className="h-96 w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-screen w-full bg-muted/40">
+      <aside className="hidden w-64 flex-col border-r bg-background sm:flex">
+        <div className="flex h-16 items-center border-b px-6">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
+            <School className="h-6 w-6 text-primary" />
+            <span>HolyWrit Admin</span>
+          </Link>
+        </div>
+        <nav className="flex-1 overflow-auto py-4">
+          <ul className="grid items-start px-4 text-sm font-medium">
+            {navItems.map((item) => (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
+                    pathname === item.href ? "bg-muted text-primary" : "text-muted-foreground"
+                  }`}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </aside>
+      <div className="flex flex-1 flex-col">
+        <header className="flex h-16 items-center justify-end gap-4 border-b bg-background px-6">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback>A</AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Admin Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </header>
+        <main className="flex-1 overflow-auto p-4 sm:p-6">{children}</main>
+      </div>
+    </div>
+  );
+}
