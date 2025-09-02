@@ -1,15 +1,18 @@
+
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Wrench, Shield, Briefcase, Stethoscope, UserCheck, LogIn } from "lucide-react";
 
 const staffCategories = [
-  { name: "Teaching Staff", icon: <User className="w-8 h-8 text-primary" />, role: "teaching" },
-  { name: "Admin Staff", icon: <Briefcase className="w-8 h-8 text-primary" />, role: "admin-staff" },
-  { name: "Group C Staff", icon: <Wrench className="w-8 h-8 text-primary" />, role: "group-c" },
-  { name: "Peon Staff", icon: <UserCheck className="w-8 h-8 text-primary" />, role: "peon" },
-  { name: "Hostel Staff", icon: <Stethoscope className="w-8 h-8 text-primary" />, role: "hostel" },
+  { name: "Teaching Staff", icon: <User className="w-8 h-8 text-primary" />, href: "/register?role=teaching" },
+  { name: "Admin Staff", icon: <Briefcase className="w-8 h-8 text-primary" />, href: "/register?role=admin-staff" },
+  { name: "Group C Staff", icon: <Wrench className="w-8 h-8 text-primary" />, href: "/register?role=group-c" },
+  { name: "Peon Staff", icon: <UserCheck className="w-8 h-8 text-primary" />, href: "/register?role=peon" },
+  { name: "Hostel Staff", icon: <Stethoscope className="w-8 h-8 text-primary" />, href: "/register?role=hostel" },
 ];
 
 export default function Home() {
@@ -42,39 +45,60 @@ export default function Home() {
           </Button>
         </header>
 
-        <main className="flex flex-col items-center justify-center text-center mt-20 animate-fade-in">
-          <h1 className="text-4xl md:text-5xl font-headline font-bold tracking-tight text-primary-foreground bg-primary/90 px-4 py-2 rounded-lg shadow-lg">
-            Welcome to Holy Writ High School and Junior College
-          </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground mt-4 font-semibold">
-            Attendance Portal
-          </p>
+        <main className="flex flex-col items-center justify-center text-center mt-20">
+          <div className="bg-primary/90 px-6 py-3 rounded-lg shadow-lg">
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-primary-foreground">
+              Welcome to Holy Writ High School and Junior College
+            </h1>
+            <p className="text-xl md:text-2xl text-primary-foreground/90 mt-2 font-semibold">
+              Attendance Portal
+            </p>
+          </div>
 
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 max-w-7xl">
-            {staffCategories.map((category, index) => (
-              <Card 
-                key={category.name} 
-                className="w-full max-w-sm transform hover:scale-105 transition-transform duration-300 shadow-lg animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <CardHeader className="items-center p-6">
-                  {category.icon}
-                  <CardTitle className="mt-4 text-center">{category.name}</CardTitle>
-                </CardHeader>
-                <div className="p-6 pt-0 flex flex-col gap-4">
-                  <Button asChild className="w-full">
-                    <Link href={`/register?role=${category.role}`}>
-                      <UserCheck className="mr-2 h-4 w-4" /> Register
+          <div className="mt-12 w-full max-w-5xl">
+            <Card className="bg-background/80 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-center text-2xl">Select Your Staff Category</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {staffCategories.map((category) => (
+                    <Link key={category.name} href={category.href} className="block group">
+                      <Card className="text-center h-full transform hover:scale-105 hover:bg-primary/10 transition-transform duration-300 shadow-lg flex flex-col justify-between">
+                        <CardHeader className="items-center p-6">
+                          {category.icon}
+                          <CardTitle className="mt-4 text-lg">{category.name}</CardTitle>
+                        </CardHeader>
+                         <CardContent>
+                           <Button asChild className="w-full">
+                                <span className="flex items-center">
+                                    <LogIn className="mr-2 h-4 w-4" /> Proceed
+                                </span>
+                           </Button>
+                        </CardContent>
+                      </Card>
                     </Link>
-                  </Button>
-                  <Button asChild variant="secondary" className="w-full">
-                    <Link href="/login">
-                      <LogIn className="mr-2 h-4 w-4" /> Mark Attendance
-                    </Link>
-                  </Button>
+                  ))}
+                  <Link href="/login" className="block group md:col-span-2 lg:col-span-3">
+                     <Card className="text-center h-full transform hover:scale-105 hover:bg-primary/10 transition-transform duration-300 shadow-lg flex flex-col justify-center bg-primary/20 border-primary">
+                        <CardHeader>
+                            <CardTitle className="text-xl text-primary">Already Registered?</CardTitle>
+                             <CardDescription>
+                                Mark your attendance here.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                           <Button variant="secondary" className="w-full max-w-xs mx-auto">
+                               <span className="flex items-center">
+                                    <UserCheck className="mr-2 h-4 w-4" /> Mark Attendance
+                                </span>
+                           </Button>
+                        </CardContent>
+                    </Card>
+                  </Link>
                 </div>
-              </Card>
-            ))}
+              </CardContent>
+            </Card>
           </div>
         </main>
       </div>

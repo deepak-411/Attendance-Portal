@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -15,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Staff } from "@/lib/types";
 import { Home, UserPlus } from "lucide-react";
 import Link from "next/link";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const staffRoles = [
   { value: "teaching", label: "Teaching Staff" },
@@ -26,11 +28,41 @@ const staffRoles = [
   { value: "hostel-nurse", label: "Hostel Staff (Nurse)" },
 ];
 
+const teachingClassesOptions = [
+    { id: "1", label: "Class 1" },
+    { id: "2", label: "Class 2" },
+    { id: "3", label: "Class 3" },
+    { id: "4", label: "Class 4" },
+    { id: "5", label: "Class 5" },
+    { id: "6", label: "Class 6" },
+    { id: "7", label: "Class 7" },
+    { id: "8", label: "Class 8" },
+    { id: "9", label: "Class 9" },
+    { id: "10", label: "Class 10" },
+    { id: "11-science", label: "11th Science" },
+    { id: "11-commerce", label: "11th Commerce" },
+    { id: "12-science", label: "12th Science" },
+    { id: "12-commerce", label: "12th Commerce" },
+];
+
 const registrationSchema = z.object({
   fullName: z.string().min(3, "Full name must be at least 3 characters"),
   email: z.string().email("Invalid email address"),
   role: z.string({ required_error: "Please select a role" }),
+  // Conditional fields for teaching staff
+  educationQualification: z.string().optional(),
+  post: z.string().optional(),
+  teachingClasses: z.array(z.string()).optional(),
+}).refine(data => {
+    if (data.role === 'teaching') {
+        return !!data.educationQualification && !!data.post && !!data.teachingClasses && data.teachingClasses.length > 0;
+    }
+    return true;
+}, {
+    message: "Education, post, and classes are required for teaching staff",
+    path: ["educationQualification"], // You can choose which field to attach the error to
 });
+
 
 type RegistrationFormValues = z.infer<typeof registrationSchema>;
 
@@ -59,8 +91,13 @@ export default function RegisterPage() {
       fullName: "",
       email: "",
       role: defaultRole && staffRoles.some(r => r.value === defaultRole) ? defaultRole : undefined,
+      educationQualification: "",
+      post: "",
+      teachingClasses: [],
     },
   });
+
+  const watchedRole = form.watch("role");
 
   const onSubmit: SubmitHandler<RegistrationFormValues> = (data) => {
     if (!isMounted) return;
@@ -84,11 +121,17 @@ export default function RegisterPage() {
         email: data.email,
         role: data.role,
         registrationDate: new Date().toISOString(),
+        ...(data.role === 'teaching' && {
+            educationQualification: data.educationQualification,
+            post: data.post,
+            teachingClasses: data.teachingClasses,
+        }),
       };
 
       staffList.push(newStaff);
       localStorage.setItem("staffList", JSON.stringify(staffList));
       setNewStaffId(newStaff.id);
+      form.reset();
 
     } catch (error) {
       console.error("Registration error:", error);
@@ -100,13 +143,15 @@ export default function RegisterPage() {
     }
   };
 
+  if (!isMounted) return null;
+
   return (
     <>
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Button asChild variant="outline" className="absolute top-4 left-4">
           <Link href="/"><Home className="mr-2 h-4 w-4" /> Home</Link>
         </Button>
-        <Card className="w-full max-w-md shadow-2xl">
+        <Card className="w-full max-w-lg shadow-2xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-2xl"><UserPlus /> Staff Registration</CardTitle>
             <CardDescription>Create your account to start marking attendance.</CardDescription>
@@ -162,6 +207,83 @@ export default function RegisterPage() {
                     </FormItem>
                   )}
                 />
+
+                {watchedRole === 'teaching' && (
+                    <>
+                        <FormField
+                            control={form.control}
+                            name="educationQualification"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Education Qualification</FormLabel>
+                                    <FormControl><Input placeholder="e.g., M.Sc. B.Ed." {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="post"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Post</FormLabel>
+                                    <FormControl><Input placeholder="e.g., Assistant Teacher" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="teachingClasses"
+                            render={() => (
+                                <FormItem>
+                                    <div className="mb-4">
+                                        <FormLabel>Classes You Will Teach</FormLabel>
+                                        <FormDescription>
+                                            Select all applicable classes.
+                                        </FormDescription>
+                                    </div>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {teachingClassesOptions.map((item) => (
+                                        <FormField
+                                            key={item.id}
+                                            control={form.control}
+                                            name="teachingClasses"
+                                            render={({ field }) => {
+                                                return (
+                                                    <FormItem
+                                                        key={item.id}
+                                                        className="flex flex-row items-start space-x-3 space-y-0"
+                                                    >
+                                                        <FormControl>
+                                                            <Checkbox
+                                                                checked={field.value?.includes(item.id)}
+                                                                onCheckedChange={(checked) => {
+                                                                    return checked
+                                                                        ? field.onChange([...(field.value || []), item.id])
+                                                                        : field.onChange(
+                                                                            field.value?.filter(
+                                                                                (value) => value !== item.id
+                                                                            )
+                                                                        )
+                                                                }}
+                                                            />
+                                                        </FormControl>
+                                                        <FormLabel className="font-normal">
+                                                            {item.label}
+                                                        </FormLabel>
+                                                    </FormItem>
+                                                )
+                                            }}
+                                        />
+                                    ))}
+                                    </div>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </>
+                )}
                 
                 <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
                   {form.formState.isSubmitting ? "Registering..." : "Register"}
@@ -191,3 +313,4 @@ export default function RegisterPage() {
     </>
   );
 }
+

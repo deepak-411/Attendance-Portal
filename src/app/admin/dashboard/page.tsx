@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -183,7 +184,7 @@ export default function AdminDashboardPage() {
                                             <TableCell>{rec.staffName}</TableCell>
                                             <TableCell>{rec.staffId}</TableCell>
                                             <TableCell>{rec.date} at {rec.time}</TableCell>
-                                            <TableCell>{rec.staffRole}</TableCell>
+                                            <TableCell>{staffRoles.find(r => r.value === rec.staffRole)?.label || rec.staffRole}</TableCell>
                                         </TableRow>
                                     )) : (
                                         <TableRow>
@@ -240,7 +241,7 @@ export default function AdminDashboardPage() {
                                             <TableRow key={s.id}>
                                                 <TableCell>{s.fullName}</TableCell>
                                                 <TableCell>{s.id}</TableCell>
-                                                <TableCell>{s.role}</TableCell>
+                                                <TableCell>{staffRoles.find(r => r.value === s.role)?.label || s.role}</TableCell>
                                                 <TableCell>{s.email}</TableCell>
                                                 <TableCell>{format(new Date(s.registrationDate), "PPP")}</TableCell>
                                             </TableRow>

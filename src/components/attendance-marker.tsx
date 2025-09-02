@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Staff, AttendanceRecord } from "@/lib/types";
@@ -25,6 +26,7 @@ export function AttendanceMarker({ staff }: AttendanceMarkerProps) {
   const { toast } = useToast();
 
   const checkExistingAttendance = useCallback(() => {
+    if (typeof window === "undefined") return;
     const attendanceList: AttendanceRecord[] = JSON.parse(localStorage.getItem("attendanceList") || "[]");
     const today = format(new Date(), "yyyy-MM-dd");
     const todaysRecord = attendanceList.find(rec => rec.staffId === staff.id && rec.date === today);
@@ -62,7 +64,8 @@ export function AttendanceMarker({ staff }: AttendanceMarkerProps) {
       () => {
         setLocationError("Unable to retrieve your location. Please enable location services.");
         setStep("location_failed");
-      }
+      },
+      { timeout: 10000 }
     );
   };
 
@@ -87,6 +90,7 @@ export function AttendanceMarker({ staff }: AttendanceMarkerProps) {
     if (step === "camera") {
       startCamera();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
 
@@ -98,12 +102,15 @@ export function AttendanceMarker({ staff }: AttendanceMarkerProps) {
       canvas.height = video.videoHeight;
       const context = canvas.getContext("2d");
       if (context) {
+        context.translate(video.videoWidth, 0);
+        context.scale(-1, 1);
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const dataUrl = canvas.toDataURL("image/jpeg");
         setSelfie(dataUrl);
         setStep("preview");
         if (stream) {
           stream.getTracks().forEach(track => track.stop());
+          setStream(null);
         }
       }
     }
@@ -116,6 +123,11 @@ export function AttendanceMarker({ staff }: AttendanceMarkerProps) {
 
   const handleSubmit = () => {
     setStep("submitting");
+    if (!selfie) {
+        toast({ variant: "destructive", title: "Error", description: "No selfie was taken." });
+        setStep("camera");
+        return;
+    }
     try {
       const attendanceList: AttendanceRecord[] = JSON.parse(localStorage.getItem("attendanceList") || "[]");
       const newRecord: AttendanceRecord = {
@@ -126,7 +138,7 @@ export function AttendanceMarker({ staff }: AttendanceMarkerProps) {
         date: format(new Date(), "yyyy-MM-dd"),
         time: format(new Date(), "HH:mm:ss"),
         location,
-        selfieUrl: selfie!,
+        selfieUrl: selfie,
       };
       attendanceList.unshift(newRecord);
       localStorage.setItem("attendanceList", JSON.stringify(attendanceList));
@@ -142,14 +154,14 @@ export function AttendanceMarker({ staff }: AttendanceMarkerProps) {
 
   switch (step) {
     case "initial":
-      return <Button onClick={handleGetLocation} className="w-full">Mark Today's Attendance</Button>;
+      return <Button onClick={handleGetLocation} className="w-full text-lg p-6">Mark Today's Attendance</Button>;
     case "locating":
-      return <div className="text-center p-4"><Loader2 className="animate-spin inline-block mr-2" /> Getting your location...</div>;
+      return <div className="text-center p-4 flex items-center justify-center"><Loader2 className="animate-spin mr-2" /> Getting your location...</div>;
     case "location_failed":
       return (
         <div className="text-center p-4 space-y-4">
-          <XCircle className="mx-auto text-destructive w-10 h-10" />
-          <p className="font-semibold">Location Error</p>
+          <XCircle className="mx-auto text-destructive w-12 h-12" />
+          <p className="font-semibold text-lg">Location Error</p>
           <p className="text-sm text-muted-foreground">{locationError}</p>
           <Button onClick={handleGetLocation} className="w-full">Try Again</Button>
         </div>
@@ -157,17 +169,18 @@ export function AttendanceMarker({ staff }: AttendanceMarkerProps) {
     case "camera":
       return (
         <div className="space-y-4">
-          <div className="text-sm text-center flex items-center justify-center gap-2"><MapPin className="text-green-500" size={16}/> Location captured successfully.</div>
-          <div className="w-full aspect-square bg-muted rounded-md overflow-hidden">
-            <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+          <div className="text-sm text-center text-green-600 flex items-center justify-center gap-2 font-medium bg-green-50 p-2 rounded-md"><MapPin size={16}/> Location Captured Successfully</div>
+          <div className="w-full aspect-square bg-muted rounded-md overflow-hidden relative">
+            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
             <canvas ref={canvasRef} className="hidden" />
           </div>
-          <Button onClick={takeSelfie} className="w-full"><Camera className="mr-2" /> Take Selfie</Button>
+          <Button onClick={takeSelfie} className="w-full text-lg p-6"><Camera className="mr-2" /> Take Selfie</Button>
         </div>
       );
     case "preview":
       return (
         <div className="space-y-4">
+          <p className="text-center font-semibold">Selfie Preview</p>
           {selfie && <Image src={selfie} alt="Selfie preview" width={400} height={400} className="rounded-md mx-auto" />}
           <div className="flex gap-2">
             <Button onClick={retakeSelfie} variant="outline" className="w-full"><RefreshCw className="mr-2" /> Retake</Button>
@@ -176,20 +189,20 @@ export function AttendanceMarker({ staff }: AttendanceMarkerProps) {
         </div>
       );
     case "submitting":
-      return <div className="text-center p-4"><Loader2 className="animate-spin inline-block mr-2" /> Submitting...</div>;
+      return <div className="text-center p-4 flex items-center justify-center"><Loader2 className="animate-spin mr-2" /> Submitting...</div>;
     case "done":
       return (
         <div className="text-center p-4 space-y-4">
-          <CheckCircle className="mx-auto text-green-500 w-10 h-10" />
-          <p className="font-semibold">Attendance Marked Successfully!</p>
+          <CheckCircle className="mx-auto text-green-500 w-12 h-12" />
+          <p className="font-semibold text-lg">Attendance Marked Successfully!</p>
           <p className="text-sm text-muted-foreground">Your attendance for {format(new Date(), "PPP")} is recorded.</p>
         </div>
       );
     case "already_marked":
         return (
             <div className="text-center p-4 space-y-4">
-              <CheckCircle className="mx-auto text-primary w-10 h-10" />
-              <p className="font-semibold">Attendance Already Marked</p>
+              <CheckCircle className="mx-auto text-primary w-12 h-12" />
+              <p className="font-semibold text-lg">Attendance Already Marked</p>
               <p className="text-sm text-muted-foreground">You have already marked your attendance for today.</p>
               {selfie && <Image src={selfie} alt="Today's selfie" width={150} height={150} className="rounded-full mx-auto shadow-lg" />}
             </div>
