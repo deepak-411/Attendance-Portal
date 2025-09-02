@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Staff } from "@/lib/types";
 import { Home, UserPlus } from "lucide-react";
 import Link from "next/link";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const staffRoles = [
   { value: "teaching", label: "Teaching Staff" },
@@ -26,11 +27,38 @@ const staffRoles = [
   { value: "hostel-nurse", label: "Hostel Staff (Nurse)" },
 ];
 
-const registrationSchema = z.object({
+const classOptions = [
+    { id: '1-12', label: 'Standard 1st to 12th' },
+    { id: '11-sci', label: '11th Science' },
+    { id: '11-com', label: '11th Commerce' },
+    { id: '12-sci', label: '12th Science' },
+    { id: '12-com', label: '12th Commerce' },
+];
+
+const baseSchema = z.object({
   fullName: z.string().min(3, "Full name must be at least 3 characters"),
   email: z.string().email("Invalid email address"),
   role: z.string({ required_error: "Please select a role" }),
 });
+
+const teachingStaffSchema = baseSchema.extend({
+    educationQualification: z.string().min(2, "Education qualification is required"),
+    post: z.string().min(2, "Post is required"),
+    teachingClasses: z.array(z.string()).refine(value => value.some(item => item), {
+        message: "You have to select at least one class.",
+    }),
+});
+
+const registrationSchema = z.discriminatedUnion("role", [
+    teachingStaffSchema.extend({ role: z.literal("teaching") }),
+    baseSchema.extend({ role: z.literal("admin-staff") }),
+    baseSchema.extend({ role: z.literal("group-c") }),
+    baseSchema.extend({ role: z.literal("peon") }),
+    baseSchema.extend({ role: z.literal("hostel-warden-male") }),
+    baseSchema.extend({ role: z.literal("hostel-warden-female") }),
+    baseSchema.extend({ role: z.literal("hostel-nurse") }),
+]);
+
 
 type RegistrationFormValues = z.infer<typeof registrationSchema>;
 
@@ -62,6 +90,8 @@ export default function RegisterPage() {
     },
   });
 
+  const selectedRole = form.watch("role");
+
   const onSubmit: SubmitHandler<RegistrationFormValues> = (data) => {
     if (!isMounted) return;
 
@@ -84,6 +114,9 @@ export default function RegisterPage() {
         email: data.email,
         role: data.role,
         registrationDate: new Date().toISOString(),
+        ...('educationQualification' in data && { educationQualification: data.educationQualification }),
+        ...('post' in data && { post: data.post }),
+        ...('teachingClasses' in data && { teachingClasses: data.teachingClasses }),
       };
 
       staffList.push(newStaff);
@@ -162,6 +195,86 @@ export default function RegisterPage() {
                     </FormItem>
                   )}
                 />
+
+                {selectedRole === 'teaching' && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="educationQualification"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Education Qualification</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., M.Sc, B.Ed" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="post"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Post</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Assistant Teacher" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="teachingClasses"
+                        render={() => (
+                            <FormItem>
+                                <div className="mb-4">
+                                    <FormLabel>Classes You Will Teach</FormLabel>
+                                    <FormDescription>
+                                        Select all applicable classes.
+                                    </FormDescription>
+                                </div>
+                                {classOptions.map((item) => (
+                                    <FormField
+                                        key={item.id}
+                                        control={form.control}
+                                        name="teachingClasses"
+                                        render={({ field }) => {
+                                            return (
+                                                <FormItem
+                                                    key={item.id}
+                                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                                >
+                                                    <FormControl>
+                                                        <Checkbox
+                                                            checked={field.value?.includes(item.id)}
+                                                            onCheckedChange={(checked) => {
+                                                                return checked
+                                                                    ? field.onChange([...(field.value || []), item.id])
+                                                                    : field.onChange(
+                                                                        field.value?.filter(
+                                                                            (value) => value !== item.id
+                                                                        )
+                                                                    )
+                                                            }}
+                                                        />
+                                                    </FormControl>
+                                                    <FormLabel className="font-normal">
+                                                        {item.label}
+                                                    </FormLabel>
+                                                </FormItem>
+                                            )
+                                        }}
+                                    />
+                                ))}
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                  </>
+                )}
+                
                 <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
                   {form.formState.isSubmitting ? "Registering..." : "Register"}
                 </Button>

@@ -4,6 +4,13 @@ export interface Staff {
   email: string;
   role: string; // 'teaching', 'admin-staff', etc.
   registrationDate: string;
+
+  // Fields for teaching staff
+  educationQualification?: string;
+  post?: string;
+  teachingClasses?: string[];
+
+  // Other fields can be added here for other roles
 }
 
 export interface AttendanceRecord {
