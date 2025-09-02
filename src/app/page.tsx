@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { School, User, Wrench, Shield, Briefcase, Stethoscope, UserCheck, LogIn } from "lucide-react";
+import { User, Wrench, Shield, Briefcase, Stethoscope, UserCheck, LogIn } from "lucide-react";
 
 const staffCategories = [
   { name: "Teaching Staff", icon: <User className="w-8 h-8 text-primary" />, role: "teaching" },
@@ -16,7 +16,7 @@ export default function Home() {
   return (
     <div className="relative min-h-screen w-full bg-background text-foreground">
       <Image
-        src="https://picsum.photos/1920/1080"
+        src="https://www.edustoke.com/assets/uploads-new/916b0d49-5b7f-4d79-94c1-a45185516924.jpg"
         alt="Holy Writ High School campus"
         data-ai-hint="school building"
         fill
@@ -26,7 +26,13 @@ export default function Home() {
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-4 md:p-8">
         <header className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center w-full max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
-            <School className="w-8 h-8 text-primary" />
+             <Image 
+              src="http://mychildmate.in/AdmissionForm/img/holywritlogo_512_512.png" 
+              alt="Holy Writ School Logo" 
+              width={40} 
+              height={40}
+              className="w-10 h-10"
+            />
             <span className="text-xl font-bold tracking-tight">HolyWrit Attendance</span>
           </div>
           <Button asChild variant="outline" className="bg-background/80 backdrop-blur-sm">

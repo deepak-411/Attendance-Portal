@@ -22,6 +22,18 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'http',
+        hostname: 'mychildmate.in',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.edustoke.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
