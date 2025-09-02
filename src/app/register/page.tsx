@@ -84,10 +84,6 @@ export default function RegisterPage() {
   const [newStaffId, setNewStaffId] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   const defaultRole = searchParams.get('role');
 
   const form = useForm<RegistrationFormValues>({
@@ -96,11 +92,25 @@ export default function RegisterPage() {
       fullName: "",
       email: "",
       role: defaultRole && staffRoles.some(r => r.value === defaultRole) ? defaultRole : undefined,
+      // Ensure all possible fields have a default value to avoid uncontrolled to controlled error
       educationQualification: "",
       post: "",
       teachingClasses: [],
     },
   });
+  
+  useEffect(() => {
+    setIsMounted(true);
+    // Reset fields when role changes if you want to clear them
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'role' && value.role !== 'teaching') {
+        form.setValue('educationQualification', '');
+        form.setValue('post', '');
+        form.setValue('teachingClasses', []);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const selectedRole = form.watch("role");
 
