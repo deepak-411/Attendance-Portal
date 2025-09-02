@@ -28,7 +28,16 @@ const staffRoles = [
 ];
 
 const classOptions = [
-    { id: '1-12', label: 'Standard 1st to 12th' },
+    { id: 'std-1', label: 'Standard 1' },
+    { id: 'std-2', label: 'Standard 2' },
+    { id: 'std-3', label: 'Standard 3' },
+    { id: 'std-4', label: 'Standard 4' },
+    { id: 'std-5', label: 'Standard 5' },
+    { id: 'std-6', label: 'Standard 6' },
+    { id: 'std-7', label: 'Standard 7' },
+    { id: 'std-8', label: 'Standard 8' },
+    { id: 'std-9', label: 'Standard 9' },
+    { id: 'std-10', label: 'Standard 10' },
     { id: '11-sci', label: '11th Science' },
     { id: '11-com', label: '11th Commerce' },
     { id: '12-sci', label: '12th Science' },
@@ -87,6 +96,7 @@ export default function RegisterPage() {
       fullName: "",
       email: "",
       role: defaultRole && staffRoles.some(r => r.value === defaultRole) ? defaultRole : undefined,
+      ...(defaultRole === 'teaching' && { teachingClasses: [] })
     },
   });
 
