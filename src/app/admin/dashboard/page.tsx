@@ -52,30 +52,33 @@ function generateUniqueId(role: string): string {
     return `${prefix}-${timestamp}`;
 }
 
-const StaffDetailsDialog = ({ staff }: { staff: Staff }) => {
+const StaffDetailsDialog = ({ staff, open, onOpenChange }: { staff: Staff | null, open: boolean, onOpenChange: (open: boolean) => void }) => {
+    if (!staff) return null;
     return (
-        <AlertDialogContent>
-            <AlertDialogHeader>
-                <AlertDialogTitle>{staff.fullName}</AlertDialogTitle>
-                <AlertDialogDescription>
-                    Staff ID: {staff.id} | Role: {staff.role}
-                </AlertDialogDescription>
-            </AlertDialogHeader>
-            <div className="text-sm space-y-2">
-                <p><strong>Email:</strong> {staff.email}</p>
-                <p><strong>Registration Date:</strong> {format(new Date(staff.registrationDate), "PPP")}</p>
-                {staff.role === 'teaching' && (
-                    <>
-                        <p><strong>Education:</strong> {staff.educationQualification || 'N/A'}</p>
-                        <p><strong>Post:</strong> {staff.post || 'N/A'}</p>
-                        <p><strong>Classes:</strong> {staff.teachingClasses?.join(', ') || 'N/A'}</p>
-                    </>
-                )}
-            </div>
-            <AlertDialogFooter>
-                <AlertDialogCancel>Close</AlertDialogCancel>
-            </AlertDialogFooter>
-        </AlertDialogContent>
+        <AlertDialog open={open} onOpenChange={onOpenChange}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>{staff.fullName}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Staff ID: {staff.id} | Role: {staff.role}
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="text-sm space-y-2">
+                    <p><strong>Email:</strong> {staff.email}</p>
+                    <p><strong>Registration Date:</strong> {format(new Date(staff.registrationDate), "PPP")}</p>
+                    {staff.role === 'teaching' && (
+                        <>
+                            <p><strong>Education:</strong> {staff.educationQualification || 'N/A'}</p>
+                            <p><strong>Post:</strong> {staff.post || 'N/A'}</p>
+                            <p><strong>Classes:</strong> {staff.teachingClasses?.join(', ') || 'N/A'}</p>
+                        </>
+                    )}
+                </div>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Close</AlertDialogCancel>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     )
 }
 
@@ -92,10 +95,15 @@ export default function AdminDashboardPage() {
     });
 
     const loadData = () => {
-        const attendanceData = JSON.parse(localStorage.getItem("attendanceList") || "[]");
-        const staffData = JSON.parse(localStorage.getItem("staffList") || "[]");
-        setAttendance(attendanceData);
-        setStaffList(staffData);
+        try {
+            const attendanceData = JSON.parse(localStorage.getItem("attendanceList") || "[]");
+            const staffData = JSON.parse(localStorage.getItem("staffList") || "[]");
+            setAttendance(attendanceData);
+            setStaffList(staffData);
+        } catch (error) {
+            console.error("Failed to load data from localStorage", error);
+            toast({ variant: "destructive", title: "Error loading data" });
+        }
     };
 
     useEffect(() => {
@@ -152,13 +160,13 @@ export default function AdminDashboardPage() {
         form.reset();
     };
 
-    if (!isMounted) return <p>Loading dashboard...</p>;
+    if (!isMounted) return <div className="flex h-full w-full items-center justify-center"><p>Loading dashboard...</p></div>;
 
     const today = format(new Date(), "yyyy-MM-dd");
     const todayAttendanceCount = attendance.filter(a => a.date === today).length;
 
     return (
-        <AlertDialog onOpenChange={(open) => !open && setSelectedStaff(null)}>
+        <>
             <div className="space-y-6">
                 <h1 className="text-3xl font-bold">Admin Dashboard</h1>
 
@@ -266,13 +274,11 @@ export default function AdminDashboardPage() {
                                         </TableHeader>
                                         <TableBody>
                                             {staffList.length > 0 ? staffList.map(s => (
-                                                <AlertDialogTrigger asChild key={s.id}>
-                                                    <TableRow onClick={() => setSelectedStaff(s)} className="cursor-pointer">
-                                                        <TableCell>{s.fullName}</TableCell>
-                                                        <TableCell>{s.id}</TableCell>
-                                                        <TableCell>{s.role}</TableCell>
-                                                    </TableRow>
-                                                </AlertDialogTrigger>
+                                                <TableRow key={s.id} onClick={() => setSelectedStaff(s)} className="cursor-pointer">
+                                                    <TableCell>{s.fullName}</TableCell>
+                                                    <TableCell>{s.id}</TableCell>
+                                                    <TableCell>{s.role}</TableCell>
+                                                </TableRow>
                                             )) : (
                                                 <TableRow><TableCell colSpan={3} className="text-center">No staff registered yet.</TableCell></TableRow>
                                             )}
@@ -284,7 +290,7 @@ export default function AdminDashboardPage() {
                     </TabsContent>
                 </Tabs>
             </div>
-            {selectedStaff && <StaffDetailsDialog staff={selectedStaff} />}
-        </AlertDialog>
+            <StaffDetailsDialog staff={selectedStaff} open={!!selectedStaff} onOpenChange={(open) => !open && setSelectedStaff(null)} />
+        </>
     );
 }
