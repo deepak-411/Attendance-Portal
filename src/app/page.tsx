@@ -16,9 +16,9 @@ export default function Home() {
   return (
     <div className="relative min-h-screen w-full bg-background text-foreground">
       <Image
-        src="https://www.edustoke.com/assets/uploads-new/916b0d49-5b7f-4d79-94c1-a45185516924.jpg"
-        alt="Holy Writ High School campus"
-        data-ai-hint="school building"
+        src="https://picsum.photos/1920/1080"
+        alt="Colorful abstract background"
+        data-ai-hint="colorful abstract"
         fill
         className="absolute inset-0 object-cover opacity-10"
         priority
