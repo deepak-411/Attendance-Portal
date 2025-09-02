@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -15,7 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import type { Staff } from "@/lib/types";
 import { Home, UserPlus } from "lucide-react";
 import Link from "next/link";
-import { Checkbox } from "@/components/ui/checkbox";
 
 const staffRoles = [
   { value: "teaching", label: "Teaching Staff" },
@@ -27,47 +26,11 @@ const staffRoles = [
   { value: "hostel-nurse", label: "Hostel Staff (Nurse)" },
 ];
 
-const classOptions = [
-    { id: 'std-1', label: 'Standard 1' },
-    { id: 'std-2', label: 'Standard 2' },
-    { id: 'std-3', label: 'Standard 3' },
-    { id: 'std-4', label: 'Standard 4' },
-    { id: 'std-5', label: 'Standard 5' },
-    { id: 'std-6', label: 'Standard 6' },
-    { id: 'std-7', label: 'Standard 7' },
-    { id: 'std-8', label: 'Standard 8' },
-    { id: 'std-9', label: 'Standard 9' },
-    { id: 'std-10', label: 'Standard 10' },
-    { id: '11-sci', label: '11th Science' },
-    { id: '11-com', label: '11th Commerce' },
-    { id: '12-sci', label: '12th Science' },
-    { id: '12-com', label: '12th Commerce' },
-];
-
-const baseSchema = z.object({
+const registrationSchema = z.object({
   fullName: z.string().min(3, "Full name must be at least 3 characters"),
   email: z.string().email("Invalid email address"),
   role: z.string({ required_error: "Please select a role" }),
 });
-
-const teachingStaffSchema = baseSchema.extend({
-    educationQualification: z.string().min(2, "Education qualification is required"),
-    post: z.string().min(2, "Post is required"),
-    teachingClasses: z.array(z.string()).refine(value => value.some(item => item), {
-        message: "You have to select at least one class.",
-    }),
-});
-
-const registrationSchema = z.discriminatedUnion("role", [
-    teachingStaffSchema.extend({ role: z.literal("teaching") }),
-    baseSchema.extend({ role: z.literal("admin-staff") }),
-    baseSchema.extend({ role: z.literal("group-c") }),
-    baseSchema.extend({ role: z.literal("peon") }),
-    baseSchema.extend({ role: z.literal("hostel-warden-male") }),
-    baseSchema.extend({ role: z.literal("hostel-warden-female") }),
-    baseSchema.extend({ role: z.literal("hostel-nurse") }),
-]);
-
 
 type RegistrationFormValues = z.infer<typeof registrationSchema>;
 
@@ -84,6 +47,10 @@ export default function RegisterPage() {
   const [newStaffId, setNewStaffId] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const defaultRole = searchParams.get('role');
 
   const form = useForm<RegistrationFormValues>({
@@ -92,27 +59,8 @@ export default function RegisterPage() {
       fullName: "",
       email: "",
       role: defaultRole && staffRoles.some(r => r.value === defaultRole) ? defaultRole : undefined,
-      // Ensure all possible fields have a default value to avoid uncontrolled to controlled error
-      educationQualification: "",
-      post: "",
-      teachingClasses: [],
     },
   });
-  
-  useEffect(() => {
-    setIsMounted(true);
-    // Reset fields when role changes if you want to clear them
-    const subscription = form.watch((value, { name }) => {
-      if (name === 'role' && value.role !== 'teaching') {
-        form.setValue('educationQualification', '');
-        form.setValue('post', '');
-        form.setValue('teachingClasses', []);
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
-
-  const selectedRole = form.watch("role");
 
   const onSubmit: SubmitHandler<RegistrationFormValues> = (data) => {
     if (!isMounted) return;
@@ -136,9 +84,6 @@ export default function RegisterPage() {
         email: data.email,
         role: data.role,
         registrationDate: new Date().toISOString(),
-        ...('educationQualification' in data && { educationQualification: data.educationQualification }),
-        ...('post' in data && { post: data.post }),
-        ...('teachingClasses' in data && { teachingClasses: data.teachingClasses }),
       };
 
       staffList.push(newStaff);
@@ -217,87 +162,6 @@ export default function RegisterPage() {
                     </FormItem>
                   )}
                 />
-
-                {selectedRole === 'teaching' && (
-                  <>
-                    <FormField
-                      control={form.control}
-                      name="educationQualification"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Education Qualification</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., M.Sc, B.Ed" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="post"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Post</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., Assistant Teacher" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="teachingClasses"
-                        render={() => (
-                            <FormItem>
-                                <div className="mb-4">
-                                    <FormLabel>Classes You Will Teach</FormLabel>
-                                    <FormDescription>
-                                        Select all applicable classes.
-                                    </FormDescription>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                {classOptions.map((item) => (
-                                    <FormField
-                                        key={item.id}
-                                        control={form.control}
-                                        name="teachingClasses"
-                                        render={({ field }) => {
-                                            return (
-                                                <FormItem
-                                                    key={item.id}
-                                                    className="flex flex-row items-start space-x-3 space-y-0"
-                                                >
-                                                    <FormControl>
-                                                        <Checkbox
-                                                            checked={field.value?.includes(item.id)}
-                                                            onCheckedChange={(checked) => {
-                                                                return checked
-                                                                    ? field.onChange([...(field.value || []), item.id])
-                                                                    : field.onChange(
-                                                                        field.value?.filter(
-                                                                            (value) => value !== item.id
-                                                                        )
-                                                                    )
-                                                            }}
-                                                        />
-                                                    </FormControl>
-                                                    <FormLabel className="font-normal">
-                                                        {item.label}
-                                                    </FormLabel>
-                                                </FormItem>
-                                            )
-                                        }}
-                                    />
-                                ))}
-                                </div>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                  </>
-                )}
                 
                 <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
                   {form.formState.isSubmitting ? "Registering..." : "Register"}
