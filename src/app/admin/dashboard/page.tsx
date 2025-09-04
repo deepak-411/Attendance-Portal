@@ -52,8 +52,9 @@ export default function AdminDashboardPage() {
         resolver: zodResolver(registrationSchema),
         defaultValues: { fullName: "", email: "", role: "" },
     });
-
-    const loadData = () => {
+    
+    useEffect(() => {
+        setIsMounted(true);
         try {
             const attendanceData = JSON.parse(localStorage.getItem("attendanceList") || "[]");
             const staffData = JSON.parse(localStorage.getItem("staffList") || "[]");
@@ -63,11 +64,6 @@ export default function AdminDashboardPage() {
             console.error("Failed to load data from localStorage", error);
             toast({ variant: "destructive", title: "Error loading data" });
         }
-    };
-
-    useEffect(() => {
-        setIsMounted(true);
-        loadData();
     }, []);
 
     const handleDownloadCSV = () => {
@@ -258,3 +254,5 @@ export default function AdminDashboardPage() {
         </div>
     );
 }
+
+    
