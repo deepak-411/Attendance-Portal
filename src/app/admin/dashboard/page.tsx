@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, UserPlus, Users, ClipboardList, CalendarDays, CheckCircle, XCircle } from "lucide-react";
+import { Download, UserPlus, Users, ClipboardList, CalendarDays, CheckCircle, XCircle, Filter } from "lucide-react";
 import Image from "next/image";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -64,6 +64,9 @@ export default function AdminDashboardPage() {
     const [viewingStaffReport, setViewingStaffReport] = useState<Staff | null>(null);
     const [selectedMonth, setSelectedMonth] = useState(new Date());
 
+    const [dailyReportFilter, setDailyReportFilter] = useState<string>("all");
+    const [attendanceLogFilter, setAttendanceLogFilter] = useState<string>("all");
+
 
     const form = useForm<RegistrationFormValues>({
         resolver: zodResolver(registrationSchema),
@@ -81,11 +84,16 @@ export default function AdminDashboardPage() {
             console.error("Failed to load data from localStorage", error);
             toast({ variant: "destructive", title: "Error loading data" });
         }
-    }, []);
+    }, [toast]);
 
-    const generateDailyReport = () => {
+    const generateDailyReport = (roleFilter: string) => {
         const todayStr = format(new Date(), "yyyy-MM-dd");
-        const report = staffList.map(staff => {
+        
+        const filteredStaff = roleFilter === 'all'
+            ? staffList
+            : staffList.filter(s => s.role === roleFilter);
+
+        const report = filteredStaff.map(staff => {
             const attendanceRecord = attendance.find(
                 (rec) => rec.staffId === staff.id && rec.date === todayStr
             );
@@ -100,13 +108,13 @@ export default function AdminDashboardPage() {
 
      useEffect(() => {
         if(isMounted) {
-            generateDailyReport();
+            generateDailyReport(dailyReportFilter);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isMounted, staffList, attendance]);
+    }, [isMounted, staffList, attendance, dailyReportFilter]);
 
 
-    const handleDownloadCSV = (dataToDownload, filename) => {
+    const handleDownloadCSV = (dataToDownload: any[], filename: string) => {
         if (dataToDownload.length === 0) {
             toast({ variant: "destructive", title: "No data to download" });
             return;
@@ -159,6 +167,7 @@ export default function AdminDashboardPage() {
 
         const staffAttendance = attendance.filter(rec => rec.staffId === viewingStaffReport.id);
         
+        let presentDays = 0;
         const reportData = daysInMonth.map(day => {
             const dateStr = format(day, "yyyy-MM-dd");
             let status: DailyStatus = 'Absent';
@@ -168,6 +177,7 @@ export default function AdminDashboardPage() {
                  const record = staffAttendance.find(rec => rec.date === dateStr);
                  if (record) {
                      status = 'Present';
+                     presentDays++;
                  }
             }
             return { date: dateStr, status };
@@ -179,7 +189,8 @@ export default function AdminDashboardPage() {
                     <DialogHeader>
                         <DialogTitle>Monthly Report for {viewingStaffReport.fullName}</DialogTitle>
                         <DialogDescription>
-                           Showing attendance for {format(selectedMonth, "MMMM yyyy")}
+                           Showing attendance for {format(selectedMonth, "MMMM yyyy")}. 
+                           Total days worked: <span className="font-bold text-primary">{presentDays}</span>
                         </DialogDescription>
                     </DialogHeader>
                      <div className="max-h-[60vh] overflow-y-auto">
@@ -206,7 +217,10 @@ export default function AdminDashboardPage() {
                     </div>
                     <DialogFooter>
                         <Button onClick={() => setViewingStaffReport(null)} variant="outline">Close</Button>
-                         <Button onClick={() => handleDownloadCSV(reportData, `${viewingStaffReport.fullName}_report`)}>
+                         <Button onClick={() => handleDownloadCSV(
+                            reportData.map(r => ({ date: r.date, status: r.status, name: viewingStaffReport.fullName, staff_id: viewingStaffReport.id })),
+                            `${viewingStaffReport.fullName}_report`
+                          )}>
                             <Download className="mr-2 h-4 w-4" /> Download
                         </Button>
                     </DialogFooter>
@@ -219,6 +233,11 @@ export default function AdminDashboardPage() {
 
     const today = format(new Date(), "yyyy-MM-dd");
     const todayAttendanceCount = attendance.filter(a => a.date === today).length;
+
+    const filteredAttendanceLog = attendanceLogFilter === 'all'
+        ? attendance
+        : attendance.filter(rec => rec.staffRole === attendanceLogFilter);
+
 
     return (
         <div className="space-y-6">
@@ -258,6 +277,29 @@ export default function AdminDashboardPage() {
                         <CardHeader>
                             <CardTitle>Daily Attendance Report ({format(new Date(), "PPP")})</CardTitle>
                             <CardDescription>Automatically generated report of staff attendance for today.</CardDescription>
+                             <div className="flex items-center gap-4 pt-4">
+                                <div className="flex items-center gap-2">
+                                    <Filter className="h-4 w-4 text-muted-foreground" />
+                                    <Select value={dailyReportFilter} onValueChange={setDailyReportFilter}>
+                                        <SelectTrigger className="w-[200px]">
+                                            <SelectValue placeholder="Filter by role" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">All Roles</SelectItem>
+                                            {staffRoles.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                 <Button size="sm" onClick={() => handleDownloadCSV(dailyReport.map(r => ({
+                                        staff_name: r.staff.fullName,
+                                        staff_id: r.staff.id,
+                                        role: staffRoles.find(role => role.value === r.staff.role)?.label || r.staff.role,
+                                        status: r.status,
+                                        time_in: r.record?.time || 'N/A'
+                                    })), `daily_report_${dailyReportFilter}`)}>
+                                    <Download className="mr-2 h-4 w-4" /> Download Filtered Report
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent>
                              <Table>
@@ -285,7 +327,7 @@ export default function AdminDashboardPage() {
                                             <TableCell>{record ? record.time : "N/A"}</TableCell>
                                         </TableRow>
                                     )) : (
-                                        <TableRow><TableCell colSpan={5} className="text-center">No staff registered to generate a report.</TableCell></TableRow>
+                                        <TableRow><TableCell colSpan={5} className="text-center">No staff in this category to generate a report.</TableCell></TableRow>
                                     )}
                                 </TableBody>
                             </Table>
@@ -297,7 +339,7 @@ export default function AdminDashboardPage() {
                     <Card>
                         <CardHeader>
                              <CardTitle>Monthly Attendance View</CardTitle>
-                             <CardDescription>Select a month to view the attendance calendar.</CardDescription>
+                             <CardDescription>Select a month to view the attendance calendar for all staff.</CardDescription>
                         </CardHeader>
                          <CardContent className="flex justify-center">
                             <Calendar
@@ -337,8 +379,20 @@ export default function AdminDashboardPage() {
                             <div>
                                 <CardTitle>Full Attendance Log</CardTitle>
                                 <CardDescription>View all marked attendance records.</CardDescription>
+                                <div className="flex items-center gap-2 pt-4">
+                                     <Filter className="h-4 w-4 text-muted-foreground" />
+                                    <Select value={attendanceLogFilter} onValueChange={setAttendanceLogFilter}>
+                                        <SelectTrigger className="w-[200px]">
+                                            <SelectValue placeholder="Filter by role" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">All Roles</SelectItem>
+                                            {staffRoles.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
-                            <Button size="sm" onClick={() => handleDownloadCSV(attendance.map(rec => ({
+                            <Button size="sm" onClick={() => handleDownloadCSV(filteredAttendanceLog.map(rec => ({
                                 staff_id: rec.staffId,
                                 name: rec.staffName,
                                 role: rec.staffRole,
@@ -346,7 +400,7 @@ export default function AdminDashboardPage() {
                                 time: rec.time,
                                 lat: rec.location?.latitude,
                                 long: rec.location?.longitude
-                            })), 'full_attendance_log')}><Download className="mr-2 h-4 w-4" /> Download Full Log</Button>
+                            })), 'full_attendance_log')}><Download className="mr-2 h-4 w-4" /> Download Log</Button>
                         </CardHeader>
                         <CardContent>
                             <Table>
@@ -360,7 +414,7 @@ export default function AdminDashboardPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {attendance.length > 0 ? attendance.map(rec => (
+                                    {filteredAttendanceLog.length > 0 ? filteredAttendanceLog.map(rec => (
                                         <TableRow key={rec.id}>
                                             <TableCell>
                                                 <Image src={rec.selfieUrl} alt="selfie" width={40} height={40} className="rounded-full" />
@@ -372,7 +426,7 @@ export default function AdminDashboardPage() {
                                         </TableRow>
                                     )) : (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="text-center">No attendance records found.</TableCell>
+                                            <TableCell colSpan={5} className="text-center">No attendance records found for this filter.</TableCell>
                                         </TableRow>
                                     )}
                                 </TableBody>
@@ -446,3 +500,5 @@ export default function AdminDashboardPage() {
         </div>
     );
 }
+
+    
