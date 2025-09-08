@@ -15,7 +15,7 @@ import { Home, UserCog } from "lucide-react";
 import Link from "next/link";
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -28,13 +28,13 @@ export default function VicePrincipalLoginPage() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
+      username: "",
       password: "",
     },
   });
 
   const onSubmit: SubmitHandler<LoginFormValues> = (data) => {
-    if (loginVicePrincipal(data.email, data.password)) {
+    if (loginVicePrincipal(data.username, data.password)) {
       toast({
         title: "Login Successful",
         description: "Redirecting to Vice Principal dashboard...",
@@ -64,12 +64,12 @@ export default function VicePrincipalLoginPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
-                name="email"
+                name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Username</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="vp@holywrit.com" {...field} />
+                      <Input type="text" placeholder="VP2025" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
