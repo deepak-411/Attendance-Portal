@@ -21,22 +21,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    if (!checkAdminAuth()) {
+    // If the user is not authenticated and not on the login page, redirect them.
+    if (!checkAdminAuth() && pathname !== "/admin/login") {
       router.replace("/admin/login");
     } else {
       setIsAuthorized(true);
     }
-  }, [router]);
+  }, [router, pathname]);
 
   const handleLogout = () => {
     logoutAdmin();
     router.push("/admin/login");
   };
 
+  // If on the login page, just render the children without the layout
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
+
   if (!isAuthorized) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <Skeleton className="h-full w-64" />
         <div className="flex-1 p-8">
           <Skeleton className="h-16 w-1/3 mb-8" />
           <Skeleton className="h-96 w-full" />
