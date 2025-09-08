@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import type { Staff, Timetable, TimetableEntry } from "@/lib/types";
+import type { Staff, Timetable } from "@/lib/types";
 import { AttendanceMarker } from "@/components/attendance-marker";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

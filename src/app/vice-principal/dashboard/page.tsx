@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { generateTimetable, type TimetableInput, type TimetableOutput } from "@/ai/flows/timetable-flow";
+import { generateTimetable } from "@/ai/flows/timetable-flow";
+import type { TimetableInput, TimetableOutput } from "@/lib/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Bot, Calendar, Loader2, Send } from "lucide-react";
 
