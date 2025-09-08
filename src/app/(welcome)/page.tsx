@@ -16,7 +16,7 @@ export default function WelcomePage() {
             alt="Holy Writ School and Junior College building"
             data-ai-hint="school building"
             fill
-            className="absolute inset-0 object-cover opacity-10"
+            className="absolute inset-0 object-cover opacity-20"
             priority
         />
       </div>

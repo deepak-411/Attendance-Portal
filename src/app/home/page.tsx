@@ -23,7 +23,7 @@ export default function HomePage() {
         alt="Holy Writ School and Junior College building"
         data-ai-hint="school building"
         fill
-        className="absolute inset-0 object-cover opacity-10"
+        className="absolute inset-0 object-cover opacity-20"
         priority
       />
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-4 md:p-8">
