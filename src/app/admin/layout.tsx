@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -31,7 +32,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const handleLogout = () => {
     logoutAdmin();
-    router.push("/admin/login");
+    router.push("/");
   };
 
   // If on the login page, just render the children without the layout
