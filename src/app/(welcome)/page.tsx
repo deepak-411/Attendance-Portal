@@ -45,13 +45,10 @@ export default function WelcomePage() {
                 height={80}
                 className="w-20 h-20 mx-auto mb-4"
             />
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-                Welcome to Holy Writ High School and Junior College
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+                Welcome to Holy Writ High School and Junior College, Attendance Portal
             </h1>
-            <p className="mt-4 text-xl md:text-2xl text-white/90">
-                Attendance Portal
-            </p>
-
+            
             <div className="mt-10">
                  <Button asChild size="lg" className="text-lg bg-white text-primary hover:bg-gray-200 transition-transform transform hover:scale-105">
                     <Link href="/home">
