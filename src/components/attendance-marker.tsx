@@ -62,10 +62,10 @@ export function AttendanceMarker({ staff }: AttendanceMarkerProps) {
         setStep("camera");
       },
       () => {
-        setLocationError("Unable to retrieve your location. Please enable location services.");
+        setLocationError("Unable to retrieve your location. Please enable location services and try again.");
         setStep("location_failed");
       },
-      { timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   };
 
