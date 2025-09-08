@@ -52,7 +52,7 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
        <Button asChild variant="outline" className="absolute top-4 left-4">
-          <Link href="/"><Home className="mr-2 h-4 w-4" /> Home</Link>
+          <Link href="/home"><Home className="mr-2 h-4 w-4" /> Home</Link>
         </Button>
       <Card className="w-full max-w-sm shadow-2xl">
         <CardHeader>

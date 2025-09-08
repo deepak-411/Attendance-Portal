@@ -15,7 +15,7 @@ const staffCategories = [
   { name: "Hostel Staff", icon: <Stethoscope className="w-8 h-8 text-primary" />, href: "/register?role=hostel" },
 ];
 
-export default function Home() {
+export default function HomePage() {
   return (
     <div className="relative min-h-screen w-full bg-background text-foreground">
       <Image

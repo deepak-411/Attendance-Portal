@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -67,7 +68,7 @@ export default function MarkAttendancePage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
       <Button asChild variant="outline" className="absolute top-4 left-4">
-        <Link href="/"><Home className="mr-2 h-4 w-4" /> Home</Link>
+        <Link href="/home"><Home className="mr-2 h-4 w-4" /> Home</Link>
       </Button>
       <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card className="shadow-2xl">

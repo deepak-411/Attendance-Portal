@@ -32,7 +32,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const handleLogout = () => {
     logoutAdmin();
-    router.push("/");
+    router.push("/home");
   };
 
   // If on the login page, just render the children without the layout
@@ -55,7 +55,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex min-h-screen w-full bg-muted/40">
       <aside className="hidden w-64 flex-col border-r bg-background sm:flex">
         <div className="flex h-16 items-center border-b px-6">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
+          <Link href="/home" className="flex items-center gap-2 font-semibold">
             <Image src="http://mychildmate.in/AdmissionForm/img/holywritlogo_512_512.png" alt="Holy Writ School Logo" width={32} height={32} />
             <span>HolyWrit Admin</span>
           </Link>
