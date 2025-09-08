@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, UserPlus, Users, ClipboardList } from "lucide-react";
+import { Download, UserPlus, Users, ClipboardList, CalendarDays, CheckCircle, XCircle } from "lucide-react";
 import Image from "next/image";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,7 +16,18 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSunday } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+
 
 const staffRoles = [
     { value: "teaching", label: "Teaching Staff" },
@@ -35,6 +46,7 @@ const registrationSchema = z.object({
 });
 
 type RegistrationFormValues = z.infer<typeof registrationSchema>;
+type DailyStatus = 'Present' | 'Absent' | 'Holiday';
 
 function generateUniqueId(role: string): string {
     const prefix = role.split('-')[0].substring(0, 5).toUpperCase();
@@ -47,6 +59,11 @@ export default function AdminDashboardPage() {
     const [staffList, setStaffList] = useState<Staff[]>([]);
     const [isMounted, setIsMounted] = useState(false);
     const { toast } = useToast();
+
+    const [dailyReport, setDailyReport] = useState<{ staff: Staff; status: DailyStatus; record?: AttendanceRecord }[]>([]);
+    const [viewingStaffReport, setViewingStaffReport] = useState<Staff | null>(null);
+    const [selectedMonth, setSelectedMonth] = useState(new Date());
+
 
     const form = useForm<RegistrationFormValues>({
         resolver: zodResolver(registrationSchema),
@@ -66,33 +83,51 @@ export default function AdminDashboardPage() {
         }
     }, []);
 
-    const handleDownloadCSV = () => {
-        if (attendance.length === 0) {
+    const generateDailyReport = () => {
+        const todayStr = format(new Date(), "yyyy-MM-dd");
+        const report = staffList.map(staff => {
+            const attendanceRecord = attendance.find(
+                (rec) => rec.staffId === staff.id && rec.date === todayStr
+            );
+            return {
+                staff,
+                status: attendanceRecord ? 'Present' : 'Absent' as DailyStatus,
+                record: attendanceRecord,
+            };
+        });
+        setDailyReport(report);
+    };
+
+     useEffect(() => {
+        if(isMounted) {
+            generateDailyReport();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isMounted, staffList, attendance]);
+
+
+    const handleDownloadCSV = (dataToDownload, filename) => {
+        if (dataToDownload.length === 0) {
             toast({ variant: "destructive", title: "No data to download" });
             return;
         }
-        const headers = ["Staff ID", "Name", "Role", "Date", "Time", "Latitude", "Longitude"];
+        const headers = Object.keys(dataToDownload[0]);
         const csvRows = [
             headers.join(','),
-            ...attendance.map(rec => [
-                rec.staffId,
-                `"${rec.staffName}"`,
-                rec.staffRole,
-                rec.date,
-                rec.time,
-                rec.location?.latitude ?? "N/A",
-                rec.location?.longitude ?? "N/A"
-            ].join(','))
+            ...dataToDownload.map(row => 
+                headers.map(header => `"${row[header] ?? 'N/A'}"`).join(',')
+            )
         ];
+        
         const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.setAttribute('href', url);
-        a.setAttribute('download', `attendance_records_${format(new Date(), "yyyy-MM-dd")}.csv`);
+        a.setAttribute('download', `${filename}_${format(new Date(), "yyyy-MM-dd")}.csv`);
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        toast({ title: "Success", description: "Attendance records downloaded." });
+        toast({ title: "Success", description: `${filename} downloaded.` });
     };
 
     const handleRegisterStaff: SubmitHandler<RegistrationFormValues> = (data) => {
@@ -113,6 +148,71 @@ export default function AdminDashboardPage() {
         setStaffList(updatedStaffList);
         toast({ title: "Success", description: `${data.fullName} has been registered with ID: ${newStaff.id}` });
         form.reset();
+    };
+
+    const renderStaffMonthlyReport = () => {
+        if (!viewingStaffReport) return null;
+
+        const monthStart = startOfMonth(selectedMonth);
+        const monthEnd = endOfMonth(selectedMonth);
+        const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+        const staffAttendance = attendance.filter(rec => rec.staffId === viewingStaffReport.id);
+        
+        const reportData = daysInMonth.map(day => {
+            const dateStr = format(day, "yyyy-MM-dd");
+            let status: DailyStatus = 'Absent';
+            if (isSunday(day)) {
+                status = 'Holiday';
+            } else {
+                 const record = staffAttendance.find(rec => rec.date === dateStr);
+                 if (record) {
+                     status = 'Present';
+                 }
+            }
+            return { date: dateStr, status };
+        });
+
+        return (
+            <Dialog open={!!viewingStaffReport} onOpenChange={() => setViewingStaffReport(null)}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Monthly Report for {viewingStaffReport.fullName}</DialogTitle>
+                        <DialogDescription>
+                           Showing attendance for {format(selectedMonth, "MMMM yyyy")}
+                        </DialogDescription>
+                    </DialogHeader>
+                     <div className="max-h-[60vh] overflow-y-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {reportData.map(({date, status}) => (
+                                    <TableRow key={date}>
+                                        <TableCell>{format(new Date(date), "PPP")}</TableCell>
+                                        <TableCell>
+                                             <Badge variant={status === 'Present' ? 'default' : status === 'Absent' ? 'destructive' : 'secondary'}>
+                                                {status}
+                                            </Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={() => setViewingStaffReport(null)} variant="outline">Close</Button>
+                         <Button onClick={() => handleDownloadCSV(reportData, `${viewingStaffReport.fullName}_report`)}>
+                            <Download className="mr-2 h-4 w-4" /> Download
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        );
     };
 
     if (!isMounted) return <div className="flex h-full w-full items-center justify-center"><p>Loading dashboard...</p></div>;
@@ -140,25 +240,113 @@ export default function AdminDashboardPage() {
                         <ClipboardList className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{todayAttendanceCount}</div>
+                        <div className="text-2xl font-bold">{`${todayAttendanceCount} / ${staffList.length}`}</div>
                     </CardContent>
                 </Card>
             </div>
 
-
-            <Tabs defaultValue="attendance" className="w-full">
-                <TabsList>
+            <Tabs defaultValue="daily-report" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="daily-report">Daily Report</TabsTrigger>
+                    <TabsTrigger value="monthly-view">Monthly View</TabsTrigger>
                     <TabsTrigger value="attendance">Attendance Log</TabsTrigger>
                     <TabsTrigger value="staff">Staff Management</TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="daily-report">
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Daily Attendance Report ({format(new Date(), "PPP")})</CardTitle>
+                            <CardDescription>Automatically generated report of staff attendance for today.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Staff Name</TableHead>
+                                        <TableHead>Staff ID</TableHead>
+                                        <TableHead>Role</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead>Time In</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {dailyReport.length > 0 ? dailyReport.map(({ staff, status, record }) => (
+                                        <TableRow key={staff.id}>
+                                            <TableCell>{staff.fullName}</TableCell>
+                                            <TableCell>{staff.id}</TableCell>
+                                            <TableCell>{staffRoles.find(r => r.value === staff.role)?.label || staff.role}</TableCell>
+                                            <TableCell>
+                                                <Badge variant={status === 'Present' ? 'default' : 'destructive'}>
+                                                    {status === 'Present' ? <CheckCircle className="mr-2 h-4 w-4" /> : <XCircle className="mr-2 h-4 w-4" />}
+                                                    {status}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>{record ? record.time : "N/A"}</TableCell>
+                                        </TableRow>
+                                    )) : (
+                                        <TableRow><TableCell colSpan={5} className="text-center">No staff registered to generate a report.</TableCell></TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="monthly-view">
+                    <Card>
+                        <CardHeader>
+                             <CardTitle>Monthly Attendance View</CardTitle>
+                             <CardDescription>Select a month to view the attendance calendar.</CardDescription>
+                        </CardHeader>
+                         <CardContent className="flex justify-center">
+                            <Calendar
+                                mode="single"
+                                selected={selectedMonth}
+                                onSelect={(day) => day && setSelectedMonth(day)}
+                                className="rounded-md border"
+                                components={{
+                                    DayContent: ({ date }) => {
+                                        const dateStr = format(date, "yyyy-MM-dd");
+                                        const presentCount = attendance.filter(rec => rec.date === dateStr).length;
+                                        const totalStaff = staffList.length;
+                                        const isSun = isSunday(date);
+                                        return (
+                                            <div className="relative flex flex-col items-center justify-center h-full w-full">
+                                                <span>{format(date, "d")}</span>
+                                                {totalStaff > 0 && !isSun && (
+                                                    <span className={`text-xs mt-1 ${presentCount > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                                        {presentCount}/{totalStaff}
+                                                    </span>
+                                                )}
+                                                {isSun && <span className="text-xs mt-1 text-muted-foreground">Holiday</span>}
+                                            </div>
+                                        );
+                                    }
+                                }}
+                                month={selectedMonth}
+                                onMonthChange={setSelectedMonth}
+                            />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
                 <TabsContent value="attendance">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle>Attendance Records</CardTitle>
+                                <CardTitle>Full Attendance Log</CardTitle>
                                 <CardDescription>View all marked attendance records.</CardDescription>
                             </div>
-                            <Button size="sm" onClick={handleDownloadCSV}><Download className="mr-2 h-4 w-4" /> Download CSV</Button>
+                            <Button size="sm" onClick={() => handleDownloadCSV(attendance.map(rec => ({
+                                staff_id: rec.staffId,
+                                name: rec.staffName,
+                                role: rec.staffRole,
+                                date: rec.date,
+                                time: rec.time,
+                                lat: rec.location?.latitude,
+                                long: rec.location?.longitude
+                            })), 'full_attendance_log')}><Download className="mr-2 h-4 w-4" /> Download Full Log</Button>
                         </CardHeader>
                         <CardContent>
                             <Table>
@@ -228,8 +416,7 @@ export default function AdminDashboardPage() {
                                           <TableHead>Name</TableHead>
                                           <TableHead>Staff ID</TableHead>
                                           <TableHead>Role</TableHead>
-                                          <TableHead>Email</TableHead>
-                                          <TableHead>Reg. Date</TableHead>
+                                          <TableHead>Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -238,11 +425,15 @@ export default function AdminDashboardPage() {
                                                 <TableCell>{s.fullName}</TableCell>
                                                 <TableCell>{s.id}</TableCell>
                                                 <TableCell>{staffRoles.find(r => r.value === s.role)?.label || s.role}</TableCell>
-                                                <TableCell>{s.email}</TableCell>
-                                                <TableCell>{format(new Date(s.registrationDate), "PPP")}</TableCell>
+                                                <TableCell>
+                                                    <Button variant="outline" size="sm" onClick={() => setViewingStaffReport(s)}>
+                                                        <CalendarDays className="mr-2 h-4 w-4" />
+                                                        View Report
+                                                    </Button>
+                                                </TableCell>
                                             </TableRow>
                                         )) : (
-                                            <TableRow><TableCell colSpan={5} className="text-center">No staff registered yet.</TableCell></TableRow>
+                                            <TableRow><TableCell colSpan={4} className="text-center">No staff registered yet.</TableCell></TableRow>
                                         )}
                                     </TableBody>
                                 </Table>
@@ -251,8 +442,7 @@ export default function AdminDashboardPage() {
                     </div>
                 </TabsContent>
             </Tabs>
+            {renderStaffMonthlyReport()}
         </div>
     );
 }
-
-    
