@@ -26,3 +26,19 @@ export interface AttendanceRecord {
   } | null;
   selfieUrl: string; // data:image/jpeg;base64,...
 }
+
+export interface TimetableEntry {
+  class: string;
+  time: string;
+  subject: string;
+  teacher: string;
+}
+
+export interface Timetable {
+  [className: string]: {
+      [timeSlot: string]: {
+          teacher: string;
+          subject: string;
+      };
+  };
+}

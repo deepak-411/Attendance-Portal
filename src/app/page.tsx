@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Wrench, Shield, Briefcase, Stethoscope, UserCheck, LogIn } from "lucide-react";
+import { User, Wrench, Shield, Briefcase, Stethoscope, UserCheck, LogIn, UserCog } from "lucide-react";
 
 const staffCategories = [
   { name: "Teaching Staff", icon: <User className="w-8 h-8 text-primary" />, href: "/register?role=teaching" },
@@ -38,11 +38,18 @@ export default function Home() {
             />
             <span className="text-xl font-bold tracking-tight">HolyWrit Attendance</span>
           </div>
-          <Button asChild variant="outline" className="bg-background/80 backdrop-blur-sm">
-            <Link href="/admin/login">
-              <Shield className="mr-2 h-4 w-4" /> Admin Login
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline" className="bg-background/80 backdrop-blur-sm">
+              <Link href="/vice-principal/login">
+                <UserCog className="mr-2 h-4 w-4" /> Vice Principal Login
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="bg-background/80 backdrop-blur-sm">
+              <Link href="/admin/login">
+                <Shield className="mr-2 h-4 w-4" /> Admin Login
+              </Link>
+            </Button>
+          </div>
         </header>
 
         <main className="flex flex-col items-center justify-center text-center mt-20">
@@ -59,6 +66,7 @@ export default function Home() {
             <Card className="bg-background/80 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-center text-2xl">Select Your Staff Category</CardTitle>
+                <CardDescription>First-time users should register in their respective category.</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -72,7 +80,7 @@ export default function Home() {
                          <CardContent>
                            <Button asChild className="w-full">
                                 <span className="flex items-center">
-                                    <LogIn className="mr-2 h-4 w-4" /> Proceed
+                                    <LogIn className="mr-2 h-4 w-4" /> Register Here
                                 </span>
                            </Button>
                         </CardContent>
@@ -84,7 +92,7 @@ export default function Home() {
                         <CardHeader>
                             <CardTitle className="text-xl text-primary">Already Registered?</CardTitle>
                              <CardDescription>
-                                Mark your attendance here.
+                                If you have your Staff ID, you can mark your attendance here.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
