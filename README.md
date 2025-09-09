@@ -3,7 +3,7 @@
 An **online attendance management system** built with **Next.js, TypeScript, and Tailwind CSS**.  
 This project is designed to replicate a **realistic government attendance app** with modern UI/UX and strong authentication features.  
 
-🔗 **Live Demo:** [Attendance Portal](https://attendance-portal-one-xi.vercel.app/)  
+🔗 **Live Demo:** [Attendance Portal](https://attendance-zeta-rouge.vercel.app/)  
 
 ---
 
