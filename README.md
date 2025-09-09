@@ -26,8 +26,7 @@ This project is designed to replicate a **realistic government attendance app** 
 
 ### 🔑 Admin Features  
 - **Login with credentials:**  
-  - Email: `dk3624897@gmail.com`  
-  - Password: `deepak411`  
+  
 - View **all staff registrations** across categories.  
 - Access **attendance records** with time/date.  
 - **Download attendance reports** in real-time.  
@@ -49,13 +48,3 @@ This project is designed to replicate a **realistic government attendance app** 
 - **Authentication:** Role-based (Admin + Staff)  
 - **Location:** Google Maps API (Geo-authentication)  
 - **Camera:** Real-time selfie verification  
-- **Hosting:** Vercel  
-
----
-
-## 🚀 Installation & Setup  
-
-1. Clone this repository:  
-   ```bash
-   git clone https://github.com/your-username/attendance-portal.git
-   cd attendance-portal
